@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 struct Pomo {
     elapsed: Duration,
     state: PomoState,
+    length: Duration,
 
     // The local state of the two buttons
     cancel_button: button::State,
@@ -22,6 +23,7 @@ pub enum Message {
     CancelPressed,
 }
 
+const MINUTE: u64 = 60;
 
 impl Application for Pomo {
     type Executor = executor::Default;
@@ -33,6 +35,7 @@ impl Application for Pomo {
             Pomo {
                 elapsed: Duration::default(),
                 state: PomoState::Idle,
+                length: Duration::from_secs(MINUTE * 25),
                 cancel_button: button::State::new(),
                 start_button: button::State::new(),
             },
@@ -83,12 +86,20 @@ impl Application for Pomo {
                     PomoState::Ticking { last_tick } => {
                         self.elapsed += now - *last_tick;
                         *last_tick = now;
+
+                        println!("elapsed: {}", self.elapsed.as_secs());
+                        println!("length: {}", self.length.as_secs());
+                        if self.elapsed.as_secs()  == self.length.as_secs() {
+                            self.elapsed = Duration::default();
+                            self.state = PomoState::Idle;
+                        }
                     },
                     _ => {}
                 }
             }
             Message::CancelPressed => {
                 self.elapsed = Duration::default();
+                self.state = PomoState::Idle;
             }
         }
         Command::none()
