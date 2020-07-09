@@ -2,7 +2,7 @@ use iced::{button, executor, time, Application, Button, Column, Command, Element
 use std::time::{Duration, Instant};
 
 struct Pomo {
-    elapsed: Duration,
+    remaining: Duration,
     state: PomoState,
     length: Duration,
 
@@ -33,9 +33,9 @@ impl Application for Pomo {
     fn new(_flags: ()) -> (Pomo, Command<Message>) {
         (
             Pomo {
-                elapsed: Duration::default(),
+                remaining: Duration::from_secs(MINUTE * 1),
                 state: PomoState::Idle,
-                length: Duration::from_secs(MINUTE * 25),
+                length: Duration::from_secs(MINUTE * 1),
                 cancel_button: button::State::new(),
                 start_button: button::State::new(),
             },
@@ -58,7 +58,7 @@ impl Application for Pomo {
             )
             .push(
                 // We show the value of the counter here
-                Text::new(&self.elapsed.as_secs().to_string()).size(50),
+                Text::new(&self.remaining.as_secs().to_string()).size(50),
             )
             .push(
                 // The decrement button. We tell it to produce a
@@ -84,13 +84,12 @@ impl Application for Pomo {
             Message::Tick(now) => {
                 match &mut self.state {
                     PomoState::Ticking { last_tick } => {
-                        self.elapsed += now - *last_tick;
+                        self.remaining -= now - *last_tick;
                         *last_tick = now;
 
-                        println!("elapsed: {}", self.elapsed.as_secs());
+                        println!("remaining: {}", self.remaining.as_secs());
                         println!("length: {}", self.length.as_secs());
-                        if self.elapsed.as_secs()  == self.length.as_secs() {
-                            self.elapsed = Duration::default();
+                        if self.remaining.as_secs()  == 0 {
                             self.state = PomoState::Idle;
                         }
                     },
@@ -98,7 +97,7 @@ impl Application for Pomo {
                 }
             }
             Message::CancelPressed => {
-                self.elapsed = Duration::default();
+                self.remaining = Duration::default();
                 self.state = PomoState::Idle;
             }
         }
