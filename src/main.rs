@@ -1,4 +1,5 @@
-use iced::{button, executor, time, Application, Button, Column, Command, Element, Settings, Subscription, Text};
+use iced::{button, executor, time, Application, Button, Column, Command, Element, Settings, Subscription, Text, TextInput};
+use iced::text_input;
 use std::time::{Duration, Instant};
 
 struct Pomo {
@@ -9,6 +10,8 @@ struct Pomo {
     // The local state of the two buttons
     cancel_button: button::State,
     start_button: button::State,
+    pomo_length_input: text_input::State,
+    pomo_length_input_val: String,
 }
 
 enum PomoState {
@@ -16,14 +19,16 @@ enum PomoState {
     Ticking { last_tick: Instant }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Message {
     StartPressed,
     Tick(Instant),
     CancelPressed,
+    PomoLengthChanged(String),
 }
 
 const MINUTE: u64 = 60;
+const HOUR: u64 = 60 * MINUTE;
 
 impl Application for Pomo {
     type Executor = executor::Default;
@@ -38,6 +43,8 @@ impl Application for Pomo {
                 length: Duration::from_secs(MINUTE * 1),
                 cancel_button: button::State::new(),
                 start_button: button::State::new(),
+                pomo_length_input: text_input::State::new(),
+                pomo_length_input_val: String::new(),
             },
             Command::none()
         )
@@ -49,23 +56,29 @@ impl Application for Pomo {
 
     fn view(&mut self) -> Element<Message> {
         // We use a column: a simple vertical layout
+        let input = TextInput::new(
+            &mut self.pomo_length_input,
+            "pomo length",
+            &self.pomo_length_input_val,
+            Message::PomoLengthChanged,
+        ).padding(15).size(10);
+        let seconds = self.remaining.as_secs();
+        let remaining = Text::new(format!(
+            "{:0>2}:{:0>2}",
+            (seconds % HOUR) / MINUTE,
+            seconds % MINUTE,
+        ));
         Column::new()
             .push(
-                // The increment button. We tell it to produce an
-                // `IncrementPressed` message when pressed
                 Button::new(&mut self.start_button, Text::new("Start"))
                     .on_press(Message::StartPressed),
             )
+            .push(remaining)
             .push(
-                // We show the value of the counter here
-                Text::new(&self.remaining.as_secs().to_string()).size(50),
-            )
-            .push(
-                // The decrement button. We tell it to produce a
-                // `DecrementPressed` message when pressed
                 Button::new(&mut self.cancel_button, Text::new("Cancel"))
                     .on_press(Message::CancelPressed),
             )
+            .push(input)
             .into()
     }
 
@@ -97,8 +110,13 @@ impl Application for Pomo {
                 }
             }
             Message::CancelPressed => {
-                self.remaining = Duration::default();
+                self.remaining = self.length;
                 self.state = PomoState::Idle;
+            }
+            Message::PomoLengthChanged(length) => {
+                self.pomo_length_input_val = length.clone();
+                self.length = Duration::from_secs(length.parse::<u64>().unwrap() * MINUTE);
+                self.remaining = self.length;
             }
         }
         Command::none()
