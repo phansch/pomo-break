@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 iced = { git = "https://github.com/hecrj/iced.git", features = ["async-std", "debug"] }
+rodio = "0.11.0"

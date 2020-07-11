@@ -1,6 +1,7 @@
 use iced::{button, executor, time, Application, Button, Column, Command, Element, Settings, Subscription, Text, TextInput};
 use iced::text_input;
 use std::time::{Duration, Instant};
+use std::io::Cursor;
 
 struct Pomo {
     remaining: Duration,
@@ -16,7 +17,7 @@ struct Pomo {
 
 enum PomoState {
     Idle,
-    Ticking { last_tick: Instant }
+    Ticking { last_tick: Instant },
 }
 
 #[derive(Debug, Clone)]
@@ -100,10 +101,9 @@ impl Application for Pomo {
                         self.remaining -= now - *last_tick;
                         *last_tick = now;
 
-                        println!("remaining: {}", self.remaining.as_secs());
-                        println!("length: {}", self.length.as_secs());
                         if self.remaining.as_secs()  == 0 {
                             self.state = PomoState::Idle;
+                            play_pomo_done();
                         }
                     },
                     _ => {}
@@ -127,9 +127,19 @@ impl Application for Pomo {
             PomoState::Idle => Subscription::none(),
             PomoState::Ticking { .. } => {
                 time::every(Duration::from_millis(10)).map(Message::Tick)
-            }
+            },
         }
     }
+}
+
+fn play_pomo_done() {
+    use rodio::Source;
+
+    let device = rodio::default_output_device().unwrap();
+
+    let buf = Cursor::new(include_bytes!("../assets/ring.mp3").to_vec());
+    let source = rodio::Decoder::new(buf).unwrap();
+    rodio::play_raw(&device, source.convert_samples());
 }
 
 fn main() {
