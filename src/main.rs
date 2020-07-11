@@ -1,4 +1,4 @@
-use iced::{button, executor, time, Application, Button, Column, Command, Element, Settings, Subscription, Text, TextInput};
+use iced::{button, executor, time, Application, Button, Column, Command, Container, Element, Settings, Subscription, Text, TextInput, Length, Row};
 use iced::text_input;
 use std::time::{Duration, Instant};
 use std::io::Cursor;
@@ -62,24 +62,33 @@ impl Application for Pomo {
             "pomo length",
             &self.pomo_length_input_val,
             Message::PomoLengthChanged,
-        ).padding(15).size(10);
+        ).size(25).width(Length::Units(30)).padding(5);
         let seconds = self.remaining.as_secs();
         let remaining = Text::new(format!(
             "{:0>2}:{:0>2}",
             (seconds % HOUR) / MINUTE,
             seconds % MINUTE,
-        ));
-        Column::new()
+        )).size(40);
+        let buttons_row = Row::new()
             .push(
                 Button::new(&mut self.start_button, Text::new("Start"))
                     .on_press(Message::StartPressed),
             )
-            .push(remaining)
             .push(
                 Button::new(&mut self.cancel_button, Text::new("Cancel"))
                     .on_press(Message::CancelPressed),
-            )
-            .push(input)
+            );
+        let content = Column::new()
+            .push(remaining)
+            .push(buttons_row)
+            .push(input);
+
+
+        Container::new(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x()
+            .center_y()
             .into()
     }
 
