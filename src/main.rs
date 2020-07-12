@@ -111,6 +111,7 @@ impl Application for Pomo {
                         *last_tick = now;
 
                         if self.remaining.as_secs()  == 0 {
+                            self.remaining = self.length;
                             self.state = PomoState::Idle;
                             play_pomo_done();
                         }
