@@ -52,7 +52,7 @@ impl Application for Pomo {
     }
 
     fn title(&self) -> String {
-        String::from("Counter - Iced")
+        String::from("Pomodoro and pause")
     }
 
     fn view(&mut self) -> Element<Message> {
@@ -152,5 +152,5 @@ fn play_pomo_done() {
 }
 
 fn main() {
-    Pomo::run(Settings::default())
+    Pomo::run(Settings { window: iced::window::Settings { resizable: false, size: (150, 100), .. iced::window::Settings::default() }, .. Settings::default() })
 }
