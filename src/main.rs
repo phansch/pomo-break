@@ -1,7 +1,10 @@
-use iced::{button, executor, time, Application, Button, Column, Command, Container, Element, Settings, Subscription, Text, TextInput, Length, Row};
 use iced::text_input;
-use std::time::{Duration, Instant};
+use iced::{
+    button, executor, time, Application, Button, Column, Command, Container, Element, Length, Row,
+    Settings, Subscription, Text, TextInput,
+};
 use std::io::Cursor;
+use std::time::{Duration, Instant};
 
 struct Pomo {
     remaining: Duration,
@@ -46,7 +49,7 @@ impl Application for Pomo {
                 pomo_length_input: text_input::State::new(),
                 pomo_length_input_val: String::new(),
             },
-            Command::none()
+            Command::none(),
         )
     }
 
@@ -61,23 +64,22 @@ impl Application for Pomo {
             "pomo length",
             &self.pomo_length_input_val,
             Message::PomoLengthChanged,
-        ).size(25).width(Length::Units(30)).padding(5);
+        )
+        .size(25)
+        .width(Length::Units(30))
+        .padding(5);
         let seconds = self.remaining.as_secs();
         let remaining = Text::new(format!(
             "{:0>2}:{:0>2}",
             (seconds % HOUR) / MINUTE,
             seconds % MINUTE,
-        )).size(40);
-        let buttons_row = Row::new()
-            .push(
-                Button::new(&mut self.toggle_button, Text::new(&self.toggle_button_text))
-                    .on_press(Message::TogglePressed),
-            );
-        let content = Column::new()
-            .push(remaining)
-            .push(buttons_row)
-            .push(input);
-
+        ))
+        .size(40);
+        let buttons_row = Row::new().push(
+            Button::new(&mut self.toggle_button, Text::new(&self.toggle_button_text))
+                .on_press(Message::TogglePressed),
+        );
+        let content = Column::new().push(remaining).push(buttons_row).push(input);
 
         Container::new(content)
             .width(Length::Fill)
@@ -89,36 +91,32 @@ impl Application for Pomo {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::TogglePressed => {
-                match self.state {
-                    PomoState::Idle => {
-                        self.state = PomoState::Ticking {
-                            last_tick: Instant::now(),
-                        };
-                        self.toggle_button_text = String::from("Cancel");
-                    },
-                    PomoState::Ticking { .. } => {
-                        self.remaining = self.length;
-                        self.state = PomoState::Idle;
-                        self.toggle_button_text = String::from("Start");
-                    }
+            Message::TogglePressed => match self.state {
+                PomoState::Idle => {
+                    self.state = PomoState::Ticking {
+                        last_tick: Instant::now(),
+                    };
+                    self.toggle_button_text = String::from("Cancel");
+                }
+                PomoState::Ticking { .. } => {
+                    self.remaining = self.length;
+                    self.state = PomoState::Idle;
+                    self.toggle_button_text = String::from("Start");
                 }
             },
-            Message::Tick(now) => {
-                match &mut self.state {
-                    PomoState::Ticking { last_tick } => {
-                        self.remaining -= now - *last_tick;
-                        *last_tick = now;
+            Message::Tick(now) => match &mut self.state {
+                PomoState::Ticking { last_tick } => {
+                    self.remaining -= now - *last_tick;
+                    *last_tick = now;
 
-                        if self.remaining.as_secs()  == 0 {
-                            self.remaining = self.length;
-                            self.state = PomoState::Idle;
-                            play_pomo_done();
-                        }
-                    },
-                    _ => {}
+                    if self.remaining.as_secs() == 0 {
+                        self.remaining = self.length;
+                        self.state = PomoState::Idle;
+                        play_pomo_done();
+                    }
                 }
-            }
+                _ => {}
+            },
             Message::PomoLengthChanged(length) => {
                 self.pomo_length_input_val = length.clone();
                 match length.parse::<u64>() {
@@ -136,9 +134,7 @@ impl Application for Pomo {
     fn subscription(&self) -> Subscription<Message> {
         match self.state {
             PomoState::Idle => Subscription::none(),
-            PomoState::Ticking { .. } => {
-                time::every(Duration::from_millis(10)).map(Message::Tick)
-            },
+            PomoState::Ticking { .. } => time::every(Duration::from_millis(10)).map(Message::Tick),
         }
     }
 }
@@ -154,5 +150,12 @@ fn play_pomo_done() {
 }
 
 fn main() {
-    Pomo::run(Settings { window: iced::window::Settings { resizable: false, size: (150, 100), .. iced::window::Settings::default() }, .. Settings::default() })
+    Pomo::run(Settings {
+        window: iced::window::Settings {
+            resizable: false,
+            size: (150, 100),
+            ..iced::window::Settings::default()
+        },
+        ..Settings::default()
+    })
 }
