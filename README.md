@@ -6,6 +6,8 @@
 
 You can use it for normal pomodoro cycles as well as only for break reminders.
 
+Note: Currently, `pomo-break` is only tested on Ubuntu/Debian.
+
 ## Contributing
 
 The following libraries need to be installed in order to compile:
