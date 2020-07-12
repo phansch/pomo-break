@@ -8,9 +8,9 @@ struct Pomo {
     state: PomoState,
     length: Duration,
 
-    // The local state of the two buttons
-    cancel_button: button::State,
-    start_button: button::State,
+    // The local state of the button
+    toggle_button: button::State,
+    toggle_button_text: String,
     pomo_length_input: text_input::State,
     pomo_length_input_val: String,
 }
@@ -22,9 +22,8 @@ enum PomoState {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    StartPressed,
+    TogglePressed,
     Tick(Instant),
-    CancelPressed,
     PomoLengthChanged(String),
 }
 
@@ -42,8 +41,8 @@ impl Application for Pomo {
                 remaining: Duration::from_secs(MINUTE * 1),
                 state: PomoState::Idle,
                 length: Duration::from_secs(MINUTE * 1),
-                cancel_button: button::State::new(),
-                start_button: button::State::new(),
+                toggle_button: button::State::new(),
+                toggle_button_text: String::from("Start"),
                 pomo_length_input: text_input::State::new(),
                 pomo_length_input_val: String::new(),
             },
@@ -71,12 +70,8 @@ impl Application for Pomo {
         )).size(40);
         let buttons_row = Row::new()
             .push(
-                Button::new(&mut self.start_button, Text::new("Start"))
-                    .on_press(Message::StartPressed),
-            )
-            .push(
-                Button::new(&mut self.cancel_button, Text::new("Cancel"))
-                    .on_press(Message::CancelPressed),
+                Button::new(&mut self.toggle_button, Text::new(&self.toggle_button_text))
+                    .on_press(Message::TogglePressed),
             );
         let content = Column::new()
             .push(remaining)
@@ -94,14 +89,19 @@ impl Application for Pomo {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::StartPressed => {
+            Message::TogglePressed => {
                 match self.state {
                     PomoState::Idle => {
                         self.state = PomoState::Ticking {
                             last_tick: Instant::now(),
-                        }
+                        };
+                        self.toggle_button_text = String::from("Cancel");
                     },
-                    _ => {}
+                    PomoState::Ticking { .. } => {
+                        self.remaining = self.length;
+                        self.state = PomoState::Idle;
+                        self.toggle_button_text = String::from("Start");
+                    }
                 }
             },
             Message::Tick(now) => {
@@ -117,10 +117,6 @@ impl Application for Pomo {
                     },
                     _ => {}
                 }
-            }
-            Message::CancelPressed => {
-                self.remaining = self.length;
-                self.state = PomoState::Idle;
             }
             Message::PomoLengthChanged(length) => {
                 self.pomo_length_input_val = length.clone();
