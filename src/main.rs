@@ -1,4 +1,4 @@
-use iced::{button, executor, time, Application, Button, Column, Command, Element, Settings, Subscription, Text, TextInput};
+use iced::{button, executor, time, Application, Button, Column, Command, Container, Element, Settings, Subscription, Text, TextInput, Length, Row};
 use iced::text_input;
 use std::time::{Duration, Instant};
 use std::io::Cursor;
@@ -8,9 +8,9 @@ struct Pomo {
     state: PomoState,
     length: Duration,
 
-    // The local state of the two buttons
-    cancel_button: button::State,
-    start_button: button::State,
+    // The local state of the button
+    toggle_button: button::State,
+    toggle_button_text: String,
     pomo_length_input: text_input::State,
     pomo_length_input_val: String,
 }
@@ -22,9 +22,8 @@ enum PomoState {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    StartPressed,
+    TogglePressed,
     Tick(Instant),
-    CancelPressed,
     PomoLengthChanged(String),
 }
 
@@ -42,8 +41,8 @@ impl Application for Pomo {
                 remaining: Duration::from_secs(MINUTE * 1),
                 state: PomoState::Idle,
                 length: Duration::from_secs(MINUTE * 1),
-                cancel_button: button::State::new(),
-                start_button: button::State::new(),
+                toggle_button: button::State::new(),
+                toggle_button_text: String::from("Start"),
                 pomo_length_input: text_input::State::new(),
                 pomo_length_input_val: String::new(),
             },
@@ -52,7 +51,7 @@ impl Application for Pomo {
     }
 
     fn title(&self) -> String {
-        String::from("Counter - Iced")
+        String::from("Pomodoro and pause")
     }
 
     fn view(&mut self) -> Element<Message> {
@@ -62,37 +61,47 @@ impl Application for Pomo {
             "pomo length",
             &self.pomo_length_input_val,
             Message::PomoLengthChanged,
-        ).padding(15).size(10);
+        ).size(25).width(Length::Units(30)).padding(5);
         let seconds = self.remaining.as_secs();
         let remaining = Text::new(format!(
             "{:0>2}:{:0>2}",
             (seconds % HOUR) / MINUTE,
             seconds % MINUTE,
-        ));
-        Column::new()
+        )).size(40);
+        let buttons_row = Row::new()
             .push(
-                Button::new(&mut self.start_button, Text::new("Start"))
-                    .on_press(Message::StartPressed),
-            )
+                Button::new(&mut self.toggle_button, Text::new(&self.toggle_button_text))
+                    .on_press(Message::TogglePressed),
+            );
+        let content = Column::new()
             .push(remaining)
-            .push(
-                Button::new(&mut self.cancel_button, Text::new("Cancel"))
-                    .on_press(Message::CancelPressed),
-            )
-            .push(input)
+            .push(buttons_row)
+            .push(input);
+
+
+        Container::new(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x()
+            .center_y()
             .into()
     }
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::StartPressed => {
+            Message::TogglePressed => {
                 match self.state {
                     PomoState::Idle => {
                         self.state = PomoState::Ticking {
                             last_tick: Instant::now(),
-                        }
+                        };
+                        self.toggle_button_text = String::from("Cancel");
                     },
-                    _ => {}
+                    PomoState::Ticking { .. } => {
+                        self.remaining = self.length;
+                        self.state = PomoState::Idle;
+                        self.toggle_button_text = String::from("Start");
+                    }
                 }
             },
             Message::Tick(now) => {
@@ -108,10 +117,6 @@ impl Application for Pomo {
                     },
                     _ => {}
                 }
-            }
-            Message::CancelPressed => {
-                self.remaining = self.length;
-                self.state = PomoState::Idle;
             }
             Message::PomoLengthChanged(length) => {
                 self.pomo_length_input_val = length.clone();
@@ -143,5 +148,5 @@ fn play_pomo_done() {
 }
 
 fn main() {
-    Pomo::run(Settings::default())
+    Pomo::run(Settings { window: iced::window::Settings { resizable: false, size: (150, 100), .. iced::window::Settings::default() }, .. Settings::default() })
 }
