@@ -1,3 +1,5 @@
+![Rust](https://github.com/phansch/pomo-break/workflows/Rust/badge.svg)
+
 # pomo-break
 
 `pomo-break` is a cross-platform pomodoro/break timer.
