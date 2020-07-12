@@ -120,8 +120,13 @@ impl Application for Pomo {
             }
             Message::PomoLengthChanged(length) => {
                 self.pomo_length_input_val = length.clone();
-                self.length = Duration::from_secs(length.parse::<u64>().unwrap() * MINUTE);
-                self.remaining = self.length;
+                match length.parse::<u64>() {
+                    Ok(val) => {
+                        self.length = Duration::from_secs(val * MINUTE);
+                        self.remaining = self.length;
+                    }
+                    Err(_) => {}
+                };
             }
         }
         Command::none()
