@@ -3,6 +3,7 @@ use iced::{
     button, executor, time, Application, Button, Column, Command, Container, Element, Length, Row,
     Settings, Subscription, Text, TextInput,
 };
+use notify_rust::Notification;
 use std::io::Cursor;
 use std::time::{Duration, Instant};
 
@@ -112,6 +113,7 @@ impl Application for Pomo {
                     if self.remaining.as_secs() == 0 {
                         self.remaining = self.length;
                         self.state = PomoState::Idle;
+                        notify();
                         play_pomo_done();
                     }
                 }
@@ -133,6 +135,16 @@ impl Application for Pomo {
             PomoState::Ticking { .. } => time::every(Duration::from_millis(10)).map(Message::Tick),
         }
     }
+}
+
+fn notify() {
+    let summary = "pomo-break";
+    let body = "Done! You finished your pomodoro session, now take a break.";
+    Notification::new()
+        .summary(summary)
+        .body(body)
+        .timeout(0)
+        .show().unwrap();
 }
 
 fn play_pomo_done() {
