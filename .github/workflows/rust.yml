@@ -1,10 +1,14 @@
 name: Rust
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+  push:
+    branches:
+      - main
+    tags:
+      - v*
+  schedule:
+    - cron: '00 01 * * *'
 
 env:
   CARGO_TERM_COLOR: always
@@ -33,3 +37,5 @@ jobs:
         run: cargo test --verbose
       - name: Run rustfmt
         run: cargo fmt -- --check
+      - name: Run Clippy Correctness lints
+        run: cargo clippy -- -D clippy::correctness
