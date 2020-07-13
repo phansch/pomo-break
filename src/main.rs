@@ -41,9 +41,9 @@ impl Application for Pomo {
     fn new(_flags: ()) -> (Pomo, Command<Message>) {
         (
             Pomo {
-                remaining: Duration::from_secs(MINUTE * 1),
+                remaining: Duration::from_secs(MINUTE * 2),
                 state: PomoState::Idle,
-                length: Duration::from_secs(MINUTE * 1),
+                length: Duration::from_secs(MINUTE * 2),
                 toggle_button: button::State::new(),
                 toggle_button_text: String::from("Start"),
                 pomo_length_input: text_input::State::new(),
@@ -104,27 +104,21 @@ impl Application for Pomo {
                     self.toggle_button_text = String::from("Start");
                 }
             },
-            Message::Tick(now) => match &mut self.state {
-                PomoState::Ticking { last_tick } => {
-                    self.remaining -= now - *last_tick;
-                    *last_tick = now;
+            Message::Tick(now) => if let PomoState::Ticking { last_tick } = &mut self.state {
+                self.remaining -= now - *last_tick;
+                *last_tick = now;
 
-                    if self.remaining.as_secs() == 0 {
-                        self.remaining = self.length;
-                        self.state = PomoState::Idle;
-                        play_pomo_done();
-                    }
+                if self.remaining.as_secs() == 0 {
+                    self.remaining = self.length;
+                    self.state = PomoState::Idle;
+                    play_pomo_done();
                 }
-                _ => {}
             },
             Message::PomoLengthChanged(length) => {
                 self.pomo_length_input_val = length.clone();
-                match length.parse::<u64>() {
-                    Ok(val) => {
-                        self.length = Duration::from_secs(val * MINUTE);
-                        self.remaining = self.length;
-                    }
-                    Err(_) => {}
+                if let Ok(val) = length.parse::<u64>() {
+                    self.length = Duration::from_secs(val * MINUTE);
+                    self.remaining = self.length;
                 };
             }
         }

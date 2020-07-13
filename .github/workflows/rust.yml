@@ -33,3 +33,5 @@ jobs:
         run: cargo test --verbose
       - name: Run rustfmt
         run: cargo fmt -- --check
+      - name: Run Clippy Correctness lints
+        run: cargo clippy -- -D clippy::correctness
