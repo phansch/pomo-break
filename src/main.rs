@@ -144,7 +144,8 @@ fn notify() {
         .summary(summary)
         .body(body)
         .timeout(0)
-        .show().unwrap();
+        .show()
+        .unwrap();
 }
 
 fn play_pomo_done() {
