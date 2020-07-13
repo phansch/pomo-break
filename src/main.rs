@@ -104,16 +104,18 @@ impl Application for Pomo {
                     self.toggle_button_text = String::from("Start");
                 }
             },
-            Message::Tick(now) => if let PomoState::Ticking { last_tick } = &mut self.state {
-                self.remaining -= now - *last_tick;
-                *last_tick = now;
+            Message::Tick(now) => {
+                if let PomoState::Ticking { last_tick } = &mut self.state {
+                    self.remaining -= now - *last_tick;
+                    *last_tick = now;
 
-                if self.remaining.as_secs() == 0 {
-                    self.remaining = self.length;
-                    self.state = PomoState::Idle;
-                    play_pomo_done();
+                    if self.remaining.as_secs() == 0 {
+                        self.remaining = self.length;
+                        self.state = PomoState::Idle;
+                        play_pomo_done();
+                    }
                 }
-            },
+            }
             Message::PomoLengthChanged(length) => {
                 self.pomo_length_input_val = length.clone();
                 if let Ok(val) = length.parse::<u64>() {
